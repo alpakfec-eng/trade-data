@@ -39,7 +39,7 @@ export default function Dashboard() {
                 <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Welcome, {session?.user?.name}</span>
               </div>
               <button
-                onClick={() => signOut()}
+                onClick={() => signOut({ callbackUrl: '/login' })}
                 className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium w-full sm:w-auto"
               >
                 Sign Out
