@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Pagination, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, HeroUIProvider } from '@heroui/react';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface TradeDataItem {
   _id: string;
@@ -63,7 +63,6 @@ export default function DataPageClient() {
   const [data, setData] = useState<TradeDataItem[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(searchParams.get('search') || '');
   const product = searchParams.get('product') || '';
   const [sortField, setSortField] = useState(searchParams.get('sortField') || 'Grade Category');
   const [sortOrder, setSortOrder] = useState(searchParams.get('sortOrder') || 'asc');
@@ -87,14 +86,7 @@ export default function DataPageClient() {
     fetchData();
   }, [fetchData]);
 
-  useEffect(() => {
-    // Sync searchInput with URL params
-    const urlSearch = searchParams.get('search') || '';
-    setSearchInput(urlSearch);
-  }, [searchParams]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const performSearch = () => {
     const params = new URLSearchParams(searchParams);
     if (searchInput) {
       params.set('search', searchInput);
@@ -103,6 +95,11 @@ export default function DataPageClient() {
     }
     params.set('page', '1'); // Reset to first page on new search
     router.push(`/data?${params}`);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    performSearch();
   };
 
   const handlePageChange = (page: number) => {
@@ -132,20 +129,22 @@ export default function DataPageClient() {
   }
 
   return (
-    <HeroUIProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <header className="bg-white dark:bg-gray-800 shadow">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-6">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {product ? `Data for ${product}` : 'All Trade Data'}
               </h1>
-              <Link
-                href="/dashboard"
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Back to Dashboard
-              </Link>
+              <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-between sm:justify-end">
+                <ThemeToggle />
+                <Link
+                  href="/dashboard"
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
             </div>
           </div>
         </header>
@@ -153,40 +152,42 @@ export default function DataPageClient() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <form onSubmit={handleSearch} className="mb-6">
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => {
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                   if (e.key === 'Enter') {
-                    handleSearch(e as any);
+                    performSearch();
                   }
                 }}
                 placeholder="Search by HS CODE, Product Name, Item Description, Grade, Grade Category, etc..."
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base"
               />
-              <button
-                type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Search
-              </button>
-              {searchInput && (
+              <div className="flex gap-2 sm:gap-4">
                 <button
-                  type="button"
-                  onClick={() => {
-                    setSearchInput('');
-                    const params = new URLSearchParams(searchParams);
-                    params.delete('search');
-                    params.set('page', '1');
-                    router.push(`/data?${params}`);
-                  }}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium flex-1 sm:flex-none"
                 >
-                  Clear
+                  Search
                 </button>
-              )}
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchInput('');
+                      const params = new URLSearchParams(searchParams);
+                      params.delete('search');
+                      params.set('page', '1');
+                      router.push(`/data?${params}`);
+                    }}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium flex-1 sm:flex-none"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </form>
 
@@ -195,22 +196,28 @@ export default function DataPageClient() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Item Description')}>
-                      Item Description {sortField === 'Item Description' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Item Description')}>
+                      <span className="hidden sm:inline">Item Description</span>
+                      <span className="sm:hidden">Description</span>
+                      {sortField === 'Item Description' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Grade')}>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Grade')}>
                       Grade {sortField === 'Grade' && (sortOrder === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Grade Category')}>
-                      Grade Category {sortField === 'Grade Category' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Grade Category')}>
+                      <span className="hidden sm:inline">Grade Category</span>
+                      <span className="sm:hidden">Category</span>
+                      {sortField === 'Grade Category' && (sortOrder === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Actual Importer Name
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      <span className="hidden sm:inline">Actual Importer Name</span>
+                      <span className="sm:hidden">Importer</span>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Consignor Name
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      <span className="hidden sm:inline">Consignor Name</span>
+                      <span className="sm:hidden">Consignor</span>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       HS CODE
                     </th>
                   </tr>
@@ -218,22 +225,28 @@ export default function DataPageClient() {
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {data.map((item) => (
                     <tr key={item._id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => handleRowClick(item)}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {item['Item Description']}
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white" title={item['Item Description']}>
+                        <div className="max-w-32 sm:max-w-none truncate">
+                          {item['Item Description'].length > 50 ? `${item['Item Description'].substring(0, 50)}...` : item['Item Description']}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {item['Grade']}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {item['Grade Category']}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {item['Actual Importer Name']}
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <div className="max-w-32 sm:max-w-none truncate">
+                          {item['Actual Importer Name']}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {item['Consignor Name']}
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <div className="max-w-32 sm:max-w-none truncate">
+                          {item['Consignor Name']}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {item['HS CODE']}
                       </td>
                     </tr>
@@ -245,42 +258,84 @@ export default function DataPageClient() {
 
           {pagination && pagination.pages > 1 && (
             <div className="mt-6 flex justify-center">
-              <Pagination
-                color="primary"
-                initialPage={pagination.page}
-                total={pagination.pages}
-                onChange={handlePageChange}
-              />
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <button
+                  onClick={() => handlePageChange(Math.max(1, pagination.page - 1))}
+                  disabled={pagination.page === 1}
+                  className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="hidden sm:inline">Previous</span>
+                  <span className="sm:hidden">←</span>
+                </button>
+                <div className="hidden sm:flex">
+                  {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(pagination.pages - 4, pagination.page - 2)) + i;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 text-sm font-medium rounded-md ${
+                          pageNum === pagination.page
+                            ? 'text-white bg-indigo-600'
+                            : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="sm:hidden">
+                  <span className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {pagination.page} / {pagination.pages}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handlePageChange(Math.min(pagination.pages, pagination.page + 1))}
+                  disabled={pagination.page === pagination.pages}
+                  className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <span className="sm:hidden">→</span>
+                </button>
+                // ADD the last page link button
+              </div>
             </div>
           )}
 
-          <Modal isOpen={isModalOpen} onOpenChange={setIsModalOpen}>
-            <ModalContent>
-              <ModalHeader>Trade Data Details</ModalHeader>
-              <ModalBody>
-                {selectedItem && (
-                  <div className="space-y-2">
-                    {Object.entries(selectedItem).map(([key, value]) => (
-                      key !== '_id' && key !== '__v' && key !== 'createdAt' && key !== 'updatedAt' && (
-                        <div key={key} className="flex justify-between">
-                          <span className="font-medium">{key}:</span>
-                          <span>{String(value)}</span>
-                        </div>
-                      )
-                    ))}
-                  </div>
-                )}
-              </ModalBody>
-              <ModalFooter>
-                <Button color="danger" variant="light" onPress={() => setIsModalOpen(false)}>
-                  Close
-                </Button>
-              </ModalFooter>
-            </ModalContent>
-          </Modal>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Trade Data Details</h3>
+                </div>
+                <div className="px-4 sm:px-6 py-4">
+                  {selectedItem && (
+                    <div className="space-y-3">
+                      {Object.entries(selectedItem).map(([key, value]) => (
+                        key !== '_id' && key !== '__v' && key !== 'createdAt' && key !== 'updatedAt' && (
+                          <div key={key} className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                            <span className="font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-0">{key}:</span>
+                            <span className="text-gray-900 dark:text-white break-words">{String(value)}</span>
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 w-full sm:w-auto"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
-    </HeroUIProvider>
   );
 }
