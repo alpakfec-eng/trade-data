@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();

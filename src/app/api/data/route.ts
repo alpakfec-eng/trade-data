@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import TradeData from '@/models/TradeData';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
