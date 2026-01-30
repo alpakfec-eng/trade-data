@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -10,10 +12,19 @@ interface GradeData {
 }
 
 export default function GradesPage() {
+  const router = useRouter();
+  const { status } = useSession();
   const [grades, setGrades] = useState<GradeData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
     fetch('/api/grades')
       .then(res => res.json())
       .then(data => {

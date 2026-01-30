@@ -3,14 +3,25 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Dashboard() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [products, setProducts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Redirect to login if not authenticated
   useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+
     fetch('/api/products')
       .then(res => res.json())
       .then(data => {
@@ -21,10 +32,14 @@ export default function Dashboard() {
         console.error('Error fetching products:', error);
         setLoading(false);
       });
-  }, []);
+  }, [status]);
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (status === 'unauthenticated') {
+    return <div className="min-h-screen flex items-center justify-center">Redirecting to login...</div>;
   }
 
   return (

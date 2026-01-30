@@ -24,7 +24,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (status === 'loading') return;
 
-    if (!session || !session.user || !['admin', 'super-admin'].includes((session.user as any).role)) {
+    if (status === 'unauthenticated' || !session || !session.user || !['admin', 'super-admin'].includes((session.user as any).role)) {
       router.push('/login');
       return;
     }

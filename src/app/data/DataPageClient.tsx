@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -60,6 +61,7 @@ interface Pagination {
 export default function DataPageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { status } = useSession();
   const [data, setData] = useState<TradeDataItem[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,16 @@ export default function DataPageClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
   const fetchData = useCallback(async () => {
+    if (status !== 'authenticated') return;
+    
     setLoading(true);
     const params = new URLSearchParams(searchParams);
     
@@ -79,12 +90,20 @@ export default function DataPageClient() {
     setData(result.data);
     setPagination(result.pagination);
     setLoading(false);
-  }, [searchParams]);
+  }, [searchParams, status]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
+
+  if (status === 'loading' || loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (status === 'unauthenticated') {
+    return <div className="min-h-screen flex items-center justify-center">Redirecting to login...</div>;
+  }
 
   const performSearch = () => {
     const params = new URLSearchParams(searchParams);

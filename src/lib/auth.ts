@@ -46,17 +46,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
         token.role = user.role;
+        token.email = user.email;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.sub!;
+      if (session.user && token) {
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
         (session.user as any).role = token.role;
       }
       return session;
@@ -66,4 +73,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: '/login',
   },
   trustHost: true,
+  secret: process.env.NEXTAUTH_SECRET,
 });

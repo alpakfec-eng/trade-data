@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -11,10 +13,19 @@ interface ImporterData {
 }
 
 export default function ImportersPage() {
+  const router = useRouter();
+  const { status } = useSession();
   const [importers, setImporters] = useState<ImporterData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
     fetch('/api/importers')
       .then(res => res.json())
       .then(data => {
