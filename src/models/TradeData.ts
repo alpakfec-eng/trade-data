@@ -44,6 +44,7 @@ const TradeDataSchema = new mongoose.Schema({
   'Port Name': { type: String },
 }, {
   timestamps: true,
+  strict: false, // Allow custom fields
 });
 
 export default mongoose.models.TradeData || mongoose.model('TradeData', TradeDataSchema);

@@ -72,13 +72,13 @@ export default function ImportersPage() {
                       Importer Name
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Address
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Records
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Actions
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Address
                     </th>
                   </tr>
                 </thead>
@@ -88,11 +88,6 @@ export default function ImportersPage() {
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         <div className="max-w-64 sm:max-w-none truncate">
                           {importer.importerName}
-                        </div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        <div className="max-w-64 sm:max-w-none truncate">
-                          {importer.importerAddress || 'N/A'}
                         </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -105,6 +100,11 @@ export default function ImportersPage() {
                         >
                           View Data →
                         </Link>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="max-w-64 sm:max-w-none truncate">
+                          {importer.importerAddress || 'N/A'}
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -80,11 +80,13 @@ export default function UploadCSVPage() {
 
       if (uploadResponse.ok) {
         const result = await uploadResponse.json();
-        setSuccess(`Successfully uploaded ${result.insertedCount} records`);
+        setSuccess(`CSV parsed successfully. Found ${result.rowCount} rows.`);
         setSelectedFile(null);
         // Reset the file input
         const fileInput = document.getElementById('csv-file') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
+        // Redirect to mapping page
+        router.push(`/upload-csv/mapping/${result.tempId}`);
       } else {
         const errorData = await uploadResponse.json();
         setError(errorData.error || 'Failed to upload CSV');
