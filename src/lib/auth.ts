@@ -98,9 +98,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account, profile, isNewUser }) {
       console.log('[AUTH:EVENT] User signed in:', user?.email);
     },
-    async error({ error }) {
-      console.error('[AUTH:EVENT] Auth error:', error);
-    },
   },
   pages: {
     signIn: '/login',
