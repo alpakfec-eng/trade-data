@@ -66,11 +66,12 @@ export default function DataPageClient() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const product = searchParams.get('product') || '';
-  const [sortField, setSortField] = useState(searchParams.get('sortField') || 'Grade Category');
+  const [sortField, setSortField] = useState(searchParams.get('sortField') || 'Cash Date');
   const [sortOrder, setSortOrder] = useState(searchParams.get('sortOrder') || 'asc');
   const [selectedItem, setSelectedItem] = useState<TradeDataItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [limit, setLimit] = useState(parseInt(searchParams.get('limit') || '10'));
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -128,13 +129,21 @@ export default function DataPageClient() {
   };
 
   const handleSort = (field: string) => {
-    const newOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
+    const newOrder = sortField === field && sortOrder === 'desc' ? 'desc' : 'asc';
     setSortField(field);
     setSortOrder(newOrder);
     const params = new URLSearchParams(searchParams);
     params.set('sortField', field);
     params.set('sortOrder', newOrder);
     params.set('page', '1');
+    router.push(`/data?${params}`);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    const params = new URLSearchParams(searchParams);
+    params.set('limit', newLimit.toString());
+    params.set('page', '1'); // Reset to first page when changing limit
     router.push(`/data?${params}`);
   };
 
@@ -215,6 +224,11 @@ export default function DataPageClient() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Cash Date')}>
+                      <span className="hidden sm:inline">Cash Date</span>
+                      <span className="sm:hidden">Cash Date</span>
+                      {sortField === 'Cash Date' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                    </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Item Description')}>
                       <span className="hidden sm:inline">Item Description</span>
                       <span className="sm:hidden">Description</span>
@@ -233,10 +247,6 @@ export default function DataPageClient() {
                       <span className="sm:hidden">Importer</span>
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      <span className="hidden sm:inline">Consignor Name</span>
-                      <span className="sm:hidden">Consignor</span>
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       HS CODE
                     </th>
                   </tr>
@@ -244,6 +254,9 @@ export default function DataPageClient() {
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {data.map((item) => (
                     <tr key={item._id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => handleRowClick(item)}>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {item['Cash Date']}
+                      </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white" title={item['Item Description']}>
                         <div className="max-w-32 sm:max-w-none truncate">
                           {item['Item Description'].length > 50 ? `${item['Item Description'].substring(0, 50)}...` : item['Item Description']}
@@ -261,11 +274,6 @@ export default function DataPageClient() {
                         </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        <div className="max-w-32 sm:max-w-none truncate">
-                          {item['Consignor Name']}
-                        </div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {item['HS CODE']}
                       </td>
                     </tr>
@@ -275,50 +283,73 @@ export default function DataPageClient() {
             </div>
           </div>
 
-          {pagination && pagination.pages > 1 && (
-            <div className="mt-6 flex justify-center">
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <button
-                  onClick={() => handlePageChange(Math.max(1, pagination.page - 1))}
-                  disabled={pagination.page === 1}
-                  className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className="hidden sm:inline">Previous</span>
-                  <span className="sm:hidden">←</span>
-                </button>
-                <div className="hidden sm:flex">
-                  {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(pagination.pages - 4, pagination.page - 2)) + i;
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-2 text-sm font-medium rounded-md ${
-                          pageNum === pagination.page
-                            ? 'text-white bg-indigo-600'
-                            : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
+          {pagination && (
+            <div className="mt-6 bg-white dark:bg-gray-800 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-4 sm:mb-0">
+                <div className="flex items-center space-x-2">
+                  <label htmlFor="limit-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Records per page:
+                  </label>
+                  <select
+                    id="limit-select"
+                    value={limit}
+                    onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+                    className="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={30}>30</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
                 </div>
-                <div className="sm:hidden">
-                  <span className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {pagination.page} / {pagination.pages}
-                  </span>
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} records
                 </div>
-                <button
-                  onClick={() => handlePageChange(Math.min(pagination.pages, pagination.page + 1))}
-                  disabled={pagination.page === pagination.pages}
-                  className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className="hidden sm:inline">Next</span>
-                  <span className="sm:hidden">→</span>
-                </button>
-                // ADD the last page link button
               </div>
+              {pagination.pages > 1 && (
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <button
+                    onClick={() => handlePageChange(Math.max(1, pagination.page - 1))}
+                    disabled={pagination.page === 1}
+                    className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">←</span>
+                  </button>
+                  <div className="hidden sm:flex">
+                    {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                      const pageNum = Math.max(1, Math.min(pagination.pages - 4, pagination.page - 2)) + i;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-2 text-sm font-medium rounded-md ${
+                            pageNum === pagination.page
+                              ? 'text-white bg-indigo-600'
+                              : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="sm:hidden">
+                    <span className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {pagination.page} / {pagination.pages}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(Math.min(pagination.pages, pagination.page + 1))}
+                    disabled={pagination.page === pagination.pages}
+                    className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">→</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

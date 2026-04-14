@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 interface CSVData {
   headers: string[];
-  data: Record<string, any>[];
+  data: Record<string, string>[];
   rowCount: number;
 }
 
@@ -62,7 +62,7 @@ export default function MappingPage() {
   const { status } = useSession();
   const [csvData, setCsvData] = useState<CSVData | null>(null);
   const [mappings, setMappings] = useState<Record<string, string>>({});
-  const [editedData, setEditedData] = useState<Record<number, Record<string, any>>>({});
+  const [editedData, setEditedData] = useState<Record<number, Record<string, string>>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [importing, setImporting] = useState(false);
@@ -78,13 +78,7 @@ export default function MappingPage() {
     }
   }, [status, router]);
 
-  useEffect(() => {
-    if (tempId) {
-      fetchCSVData();
-    }
-  }, [tempId]);
-
-  const fetchCSVData = async () => {
+  const fetchCSVData = useCallback(async () => {
     try {
       const response = await fetch(`/api/temp-csv/${tempId}`);
       if (response.ok) {
@@ -112,7 +106,13 @@ export default function MappingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tempId]);
+
+  useEffect(() => {
+    if (tempId) {
+      fetchCSVData();
+    }
+  }, [fetchCSVData, tempId]);
 
   const handleMappingChange = (csvField: string, dbField: string) => {
     setMappings(prev => ({
@@ -132,10 +132,81 @@ export default function MappingPage() {
   };
 
   const addCustomField = () => {
-    if (newFieldName.trim() && !dbFields.includes(newFieldName) && !customFields.includes(newFieldName)) {
-      setCustomFields(prev => [...prev, newFieldName.trim()]);
-      setNewFieldName('');
+    const fieldName = newFieldName.trim();
+    if (!fieldName || dbFields.includes(fieldName) || customFields.includes(fieldName)) {
+      return;
     }
+
+    setCustomFields(prev => [...prev, fieldName]);
+    setMappings(prev => {
+      const updated = { ...prev };
+      if (csvData) {
+        const matchingHeader = csvData.headers.find(
+          header => header.trim().toLowerCase() === fieldName.toLowerCase()
+        );
+        if (matchingHeader && !updated[matchingHeader]) {
+          updated[matchingHeader] = fieldName;
+        }
+      }
+      return updated;
+    });
+    setNewFieldName('');
+  };
+
+  const addUnmatchedHeaderAsCustomField = (header: string) => {
+    const fieldName = header.trim();
+    if (!fieldName || dbFields.includes(fieldName) || customFields.includes(fieldName)) {
+      return;
+    }
+
+    setCustomFields(prev => [...prev, fieldName]);
+    setMappings(prev => ({
+      ...prev,
+      [header]: fieldName,
+    }));
+  };
+
+  const addAllUnmatchedToCustomFields = () => {
+    if (!csvData) return;
+
+    const unmatched = csvData.headers.filter((header) => {
+      const normalized = header.toLowerCase().trim();
+      const matchesDbField = dbFields.some(field =>
+        field.toLowerCase().replace(/[^a-z0-9]/g, '') === normalized.replace(/[^a-z0-9]/g, '')
+      );
+      return !matchesDbField && !mappings[header];
+    });
+
+    const newFields = unmatched
+      .map(header => header.trim())
+      .filter(field => field && !dbFields.includes(field) && !customFields.includes(field));
+
+    if (newFields.length === 0) return;
+
+    setCustomFields(prev => [...prev, ...newFields]);
+    setMappings(prev => {
+      const updated = { ...prev };
+      unmatched.forEach(header => {
+        const fieldName = header.trim();
+        if (fieldName && !updated[header]) {
+          updated[header] = fieldName;
+        }
+      });
+      return updated;
+    });
+  };
+
+  const removeCustomField = (fieldName: string) => {
+    setCustomFields(prev => prev.filter(field => field !== fieldName));
+    setMappings(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(csvField => {
+        if (updated[csvField] === fieldName) {
+          delete updated[csvField];
+        }
+      });
+      return updated;
+    });
   };
 
   const allAvailableFields = [...dbFields, ...customFields];
@@ -242,8 +313,21 @@ export default function MappingPage() {
             
             {/* Add Custom Field */}
             <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Add Custom Field</h3>
-              <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Custom Fields</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Create custom fields for CSV headers that do not match the database schema.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addAllUnmatchedToCustomFields}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Add all unmatched
+                </button>
+              </div>
+
+              <div className="mt-4 flex space-x-2">
                 <input
                   type="text"
                   value={newFieldName}
@@ -252,17 +336,71 @@ export default function MappingPage() {
                   className="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
                 <button
+                  type="button"
                   onClick={addCustomField}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                 >
                   Add Field
                 </button>
               </div>
+
               {customFields.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Custom fields: {customFields.join(', ')}</p>
+                <div className="mt-4 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-100">Active custom fields</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Remove any field to unmap it.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {customFields.map((field) => (
+                      <span
+                        key={field}
+                        className="inline-flex items-center rounded-full border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-900 px-3 py-1 text-sm text-gray-700 dark:text-gray-200"
+                      >
+                        {field}
+                        <button
+                          type="button"
+                          onClick={() => removeCustomField(field)}
+                          className="ml-2 text-xs text-red-600 dark:text-red-400 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
+
+              <div className="mt-4 rounded-md border border-yellow-200 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-950/40 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-200">Unmatched CSV fields</h3>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">These headers did not match existing database fields.</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {csvData.headers.filter(header => {
+                    const normalized = header.toLowerCase().trim();
+                    const matchesDbField = dbFields.some(field =>
+                      field.toLowerCase().replace(/[^a-z0-9]/g, '') === normalized.replace(/[^a-z0-9]/g, '')
+                    );
+                    return !matchesDbField && !mappings[header];
+                  }).map((header) => (
+                    <div key={header} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md bg-white dark:bg-gray-900 p-3 border border-gray-200 dark:border-gray-700">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{header}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Add it as a custom field and map automatically.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => addUnmatchedHeaderAsCustomField(header)}
+                        className="self-start sm:self-auto bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        Add as custom field
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
