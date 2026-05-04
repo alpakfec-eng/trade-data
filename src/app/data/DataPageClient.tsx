@@ -129,7 +129,7 @@ export default function DataPageClient() {
   };
 
   const handleSort = (field: string) => {
-    const newOrder = sortField === field && sortOrder === 'desc' ? 'desc' : 'asc';
+    const newOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
     setSortField(field);
     setSortOrder(newOrder);
     const params = new URLSearchParams(searchParams);
