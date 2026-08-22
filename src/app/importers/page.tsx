@@ -36,7 +36,7 @@ export default function ImportersPage() {
         console.error('Error fetching importers:', error);
         setLoading(false);
       });
-  }, []);
+  }, [status]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -47,7 +47,7 @@ export default function ImportersPage() {
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Actual Importer List</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Importer List</h1>
             <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-between sm:justify-end">
               <ThemeToggle />
               <Link
@@ -75,10 +75,10 @@ export default function ImportersPage() {
                       Records
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Actions
+                      Address
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Address
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -93,6 +93,11 @@ export default function ImportersPage() {
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {importer.count}
                       </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="max-w-64 sm:max-w-none truncate">
+                          {importer.importerAddress || 'N/A'}
+                        </div>
+                      </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <Link
                           href={`/importers/${encodeURIComponent(importer.importerName)}/data`}
@@ -100,11 +105,6 @@ export default function ImportersPage() {
                         >
                           View Data →
                         </Link>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        <div className="max-w-64 sm:max-w-none truncate">
-                          {importer.importerAddress || 'N/A'}
-                        </div>
                       </td>
                     </tr>
                   ))}

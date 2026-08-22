@@ -7,7 +7,9 @@ import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
 interface GradeData {
-  grade: string;
+  _id?: string | number;
+  label?: string;
+  itemDescription?: string;
   count: number;
 }
 
@@ -28,25 +30,21 @@ export default function GradesPage() {
     fetch('/api/grades')
       .then(res => res.json())
       .then(data => {
-        // Count occurrences of each grade
-        const gradeCounts: { [key: string]: number } = {};
-        data.grades.forEach((grade: string) => {
-          gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
-        });
-
-        const gradeData = Object.entries(gradeCounts).map(([grade, count]) => ({
-          grade,
-          count
-        }));
-
-        setGrades(gradeData);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching grades:', error);
-        setLoading(false);
-      });
-  }, []);
+    // normalize API output: prefer label, then _id, then itemDescription for display/key
+    const normalized = (data.grades || []).map((g: any) => ({
+      _id: g._id ?? g.label ?? g.itemDescription,
+      label: g.label ?? g._id ?? g.itemDescription,
+      itemDescription: g.itemDescription,
+      count: g.count ?? 0,
+    }));
+    setGrades(normalized);
+    setLoading(false);
+  })
+  .catch(error => {
+    console.error('Error fetching grades:', error);
+    setLoading(false);
+  });
+  }, [status]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -57,7 +55,7 @@ export default function GradesPage() {
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Grades List</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Item Description List</h1>
             <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-between sm:justify-end">
               <ThemeToggle />
               <Link
@@ -79,7 +77,7 @@ export default function GradesPage() {
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Grade
+                      Item Description
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Count
@@ -91,16 +89,18 @@ export default function GradesPage() {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {grades.map((gradeData) => (
-                    <tr key={gradeData.grade} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {gradeData.grade}
+                    <tr key={gradeData._id ?? gradeData.label} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-3 sm:px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                        <div className="max-w-96 truncate">
+                          {gradeData.label ?? gradeData.itemDescription}
+                        </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {gradeData.count}
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <Link
-                          href={`/grades/${encodeURIComponent(gradeData.grade)}/importers`}
+                          href={`/grades/${encodeURIComponent(String(gradeData.label ?? gradeData._id ?? gradeData.itemDescription))}/importers`}
                           className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300"
                         >
                           View Importers →

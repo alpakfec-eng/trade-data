@@ -1,50 +1,100 @@
 import mongoose from 'mongoose';
 
 const TradeDataSchema = new mongoose.Schema({
+  // Original CSV fields
   'HS CODE': { type: String },
-  'Product Name': { type: String },
-  'Product Category': { type: String },
   'Item Description': { type: String },
-  'Grade': { type: String },
-  'Grade Category': { type: String },
   'Origin': { type: String },
-  'Origin2': { type: String },
-  'Actual LC Date': { type: String },
-  'LC Date': { type: String },
-  'No. of Days - Shipment': { type: String },
-  'Importer Category': { type: String },
-  'Actual Importer Name': { type: String },
   'Importer Name': { type: String },
-  'Imp Group': { type: String },
-  'Importer Address': { type: String },
-  'Agent Name': { type: String },
-  'Actual Consignor Name': { type: String },
+  'Importer ADDRESS': { type: String },
   'Consignor Name': { type: String },
-  'Consignor Group': { type: String },
-  'Consignor Group 12 Words': { type: String },
-  'Assessed Value': { type: String },
-  'Assessed Unit': { type: String },
-  'DCL Unit': { type: String },
-  'DCL Val': { type: String },
-  'Qty (Kg)': { type: String },
-  'Price/Kg': { type: String },
-  'QTY (Mts)': { type: String },
-  'Price/Mt': { type: String },
-  'PT DUTY': { type: String },
-  'PT STAX': { type: String },
-  'PTSTAX': { type: String },
-  'ITAXAT': { type: String },
-  'Machine No.': { type: String },
-  'Cash No': { type: String },
-  'Cash Date': { type: String },
-  'Month': { type: String },
-  'Year': { type: String },
-  'BE Type': { type: String },
-  'Port': { type: String },
-  'Port Name': { type: String },
+  'Consignor Address': { type: String },
+  'Agent Name': { type: String },
+  'CASH DATE': { type: String },
+  'IGM Date': { type: String },
+  'Curr': { type: String },
+  'USA RATE': { type: String },
+  'USA VAL': { type: String },
+  'DECL CURR': { type: String },
+  'DECL RATE': { type: String },
+  'DECL VAL': { type: String },
+  'ASSESSED RATE': { type: String },
+  'TOTAL PKR VALU ASSESSED': { type: String },
+  'Cash NO': { type: String },
+  'Quantity': { type: String },
+  'Unit': { type: String },
+  'Agent NO': { type: String },
+  'PAID A STAX': { type: String },
+  'PAID STAX': { type: String },
+  'PAID DUTY': { type: String },
+  'Additional Customs Duty': { type: String },
+  'INCOME TAX': { type: String },
+  'Federal Excise Duty': { type: String },
+  'AntiDumping Duty': { type: String },
+  'SRO-1': { type: String },
+  'SRO-2': { type: String },
+  'SRO-3': { type: String },
+  'SRO-4': { type: String },
+  'Regulatory Duty': { type: String },
+  'Gross Weight': { type: String },
+  'Net Weight': { type: String },
+  'LC No': { type: String },
+  'LC Date': { type: String },
+  'BL Number': { type: String },
+  'BL Date': { type: String },
+  'PORT': { type: String },
+  'B/E TYPE': { type: String },
+  'Machine No': { type: Number },
+  'GD Number': { type: String },
+  'BE DATE': { type: String },
+  'Item No': { type: String },
+  'IGM NO': { type: String },
+  'INDEX NO': { type: String },
+  'NTN': { type: String },
+  'Port of Shipment': { type: String },
+  'Terminal/Sheds': { type: String },
+  'Vessel Name': { type: String },
+  'ShippingLines': { type: String },
+  
+  // Extracted/normalized grade fields (for reliable grouping)
+  polymerType: { 
+    type: String, 
+    enum: ['LLDPE', 'LDPE', 'HDPE', 'MDPE', 'PP', 'OFFGRADE', null],
+    index: true 
+  },
+
+  gradeCode: { 
+    type: String, 
+    index: true 
+  },
+  normalizedGrade: { 
+    type: String, 
+    index: true  // Primary field for grouping queries
+  },
+  gradeExtractionConfidence: {
+    type: String,
+    enum: ['high', 'medium', 'low', null],
+    index: true
+  },
+  
+  // Parsed dates (for better querying)
+  parsedIGMDate: { 
+    type: Date, 
+    index: true 
+  },
+  parsedCashDate: {
+    type: Date,
+    index: true
+  },
 }, {
   timestamps: true,
   strict: false, // Allow custom fields
 });
+
+// Compound indexes for common query patterns
+TradeDataSchema.index({ normalizedGrade: 1, 'CASH DATE': -1 });
+TradeDataSchema.index({ polymerType: 1, gradeCode: 1 });
+TradeDataSchema.index({ normalizedGrade: 1, 'Importer Name': 1 });
+TradeDataSchema.index({ 'Importer Name': 1, normalizedGrade: 1 });
 
 export default mongoose.models.TradeData || mongoose.model('TradeData', TradeDataSchema);

@@ -14,17 +14,43 @@ export async function GET(
     const { grade } = await params;
     const decodedGrade = decodeURIComponent(grade);
 
-    // Get unique importers for this grade with aggregated DCL Val
+    // Get unique importers for this grade (match normalizedGrade, Grade, or Item Description) with aggregated values
     const importers = await TradeData.aggregate([
-      { $match: { 'Grade': decodedGrade } },
+      {
+        $match: {
+          $or: [
+            { 'Item Description': decodedGrade },
+            { normalizedGrade: decodedGrade },
+            { normalizedgrade: decodedGrade },
+            { Grade: decodedGrade },
+            { grade: decodedGrade },
+            // also match when numeric fields were stored as numbers by comparing their string form
+            { $expr: { $eq: [ { $toString: '$normalizedGrade' }, decodedGrade ] } },
+            { $expr: { $eq: [ { $toString: '$normalizedgrade' }, decodedGrade ] } },
+            { $expr: { $eq: [ { $toString: '$Grade' }, decodedGrade ] } },
+            { $expr: { $eq: [ { $toString: '$grade' }, decodedGrade ] } }
+          ]
+        }
+      },
+
       {
         $group: {
-          _id: '$Actual Importer Name',
-          importerName: { $first: '$Actual Importer Name' },
-          totalDCLVal: {
+          _id: '$Importer Name',
+          importerName: { $first: '$Importer Name' },
+          totalDECLVal: {
             $sum: {
               $convert: {
-                input: '$DCL Val',
+                input: '$DECL VAL',
+                to: 'double',
+                onError: 0,
+                onNull: 0
+              }
+            }
+          },
+          totalQuantity: {
+            $sum: {
+              $convert: {
+                input: '$Quantity',
                 to: 'double',
                 onError: 0,
                 onNull: 0
@@ -42,7 +68,7 @@ export async function GET(
           ]
         }
       },
-      { $sort: { totalDCLVal: -1 } }
+      { $sort: { totalDECLVal: -1 } }
     ]);
 
     return NextResponse.json({ importers });

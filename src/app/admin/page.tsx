@@ -101,6 +101,12 @@ export default function AdminPage() {
             <div className="flex items-center space-x-2 sm:space-x-4">
               <ThemeToggle />
               <Link
+                href="/admin/temp-csv"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Temp CSV Data
+              </Link>
+              <Link
                 href="/dashboard"
                 className="bg-gray-600 hover:bg-gray-700 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium"
               >

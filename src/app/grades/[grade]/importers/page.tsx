@@ -7,7 +7,8 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 interface ImporterData {
   importerName: string;
-  totalDCLVal: number;
+  totalDECLVal: number;
+  totalQuantity: number;
   count: number;
 }
 
@@ -43,10 +44,10 @@ export default function GradeImportersPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                Importers for Grade: {decodeURIComponent(grade)}
+                Importers for Item
               </h1>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Showing all unique importers with their total DCL Value
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 truncate max-w-xl">
+                {decodeURIComponent(grade)}
               </p>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-between sm:justify-end">
@@ -56,7 +57,7 @@ export default function GradeImportersPage() {
                   href="/grades"
                   className="bg-gray-600 hover:bg-gray-700 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
                 >
-                  Back to Grades
+                  Back to Items
                 </Link>
                 <Link
                   href="/dashboard"
@@ -81,7 +82,10 @@ export default function GradeImportersPage() {
                       Importer Name
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Total DCL Value
+                      Total DECL Value
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Total Quantity
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Record Count
@@ -97,7 +101,10 @@ export default function GradeImportersPage() {
                         </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        ${importer.totalDCLVal.toLocaleString()}
+                        ${importer.totalDECLVal.toLocaleString()}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {importer.totalQuantity.toLocaleString()}
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {importer.count}

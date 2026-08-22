@@ -6,10 +6,16 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
+interface ConsignorData {
+  consignorName: string;
+  consignorAddress: string;
+  count: number;
+}
+
 export default function ConsignorsPage() {
   const router = useRouter();
   const { status } = useSession();
-  const [consignors, setConsignors] = useState<string[]>([]);
+  const [consignors, setConsignors] = useState<ConsignorData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function ConsignorsPage() {
         console.error('Error fetching consignors:', error);
         setLoading(false);
       });
-  }, []);
+  }, [status]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -41,7 +47,7 @@ export default function ConsignorsPage() {
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Actual Consignor List</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Consignor List</h1>
             <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-between sm:justify-end">
               <ThemeToggle />
               <Link
@@ -66,21 +72,35 @@ export default function ConsignorsPage() {
                       Consignor Name
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Records
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Address
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {consignors.map((consignor) => (
-                    <tr key={consignor} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={consignor.consignorName} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         <div className="max-w-64 sm:max-w-none truncate">
-                          {consignor}
+                          {consignor.consignorName}
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {consignor.count}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="max-w-64 sm:max-w-none truncate">
+                          {consignor.consignorAddress || 'N/A'}
                         </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <Link
-                          href={`/consignors/${encodeURIComponent(consignor)}/data`}
+                          href={`/consignors/${encodeURIComponent(consignor.consignorName)}/data`}
                           className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300"
                         >
                           View Data →

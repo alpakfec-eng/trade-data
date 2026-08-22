@@ -8,47 +8,15 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 interface TradeDataItem {
   _id: string;
-  'HS CODE': string;
-  'Product Name': string;
-  'Product Category': string;
-  'Item Description': string;
-  'Grade': string;
-  'Grade Category': string;
-  'Origin': string;
-  'Origin2': string;
-  'Actual LC Date': string;
-  'LC Date': string;
-  'No. of Days - Shipment': string;
-  'Importer Category': string;
-  'Actual Importer Name': string;
-  'Importer Name': string;
-  'Imp Group': string;
-  'Importer Address': string;
-  'Agent Name': string;
-  'Actual Consignor Name': string;
-  'Consignor Name': string;
-  'Consignor Group': string;
-  'Consignor Group 12 Words': string;
-  'Assessed Value': string;
-  'Assessed Unit': string;
-  'DCL Unit': string;
-  'DCL Val': string;
-  'Qty (Kg)': string;
-  'Price/Kg': string;
-  'QTY (Mts)': string;
-  'Price/Mt': string;
-  'PT DUTY': string;
-  'PT STAX': string;
-  'PTSTAX': string;
-  'ITAXAT': string;
-  'Machine No.': string;
-  'Cash No': string;
-  'Cash Date': string;
-  'Month': string;
-  'Year': string;
-  'BE Type': string;
-  'Port': string;
-  'Port Name': string;
+  normalizedGrade?: string | number | null;
+  'Importer Name'?: string;
+  'Consignor Name'?: string;
+  'CASH DATE'?: string;
+  cashDate?: string | Date | null;
+  usaRateWithCurr?: string;
+  'Quantity'?: string | number;
+  // keep rest flexible — allow access to all DB fields in modal view
+  [key: string]: any;
 }
 
 interface Pagination {
@@ -65,9 +33,8 @@ export default function DataPageClient() {
   const [data, setData] = useState<TradeDataItem[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
-  const product = searchParams.get('product') || '';
-  const [sortField, setSortField] = useState(searchParams.get('sortField') || 'Cash Date');
-  const [sortOrder, setSortOrder] = useState(searchParams.get('sortOrder') || 'asc');
+  const [sortField, setSortField] = useState(searchParams.get('sortField') || 'CASH DATE');
+  const [sortOrder, setSortOrder] = useState(searchParams.get('sortOrder') || 'desc');
   const [selectedItem, setSelectedItem] = useState<TradeDataItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
@@ -94,9 +61,17 @@ export default function DataPageClient() {
   }, [searchParams, status]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
+
+  // Close modal on Escape key (hook placed here so hooks order is stable across renders)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   if (status === 'loading' || loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -113,7 +88,7 @@ export default function DataPageClient() {
     } else {
       params.delete('search');
     }
-    params.set('page', '1'); // Reset to first page on new search
+    params.set('page', '1');
     router.push(`/data?${params}`);
   };
 
@@ -143,7 +118,7 @@ export default function DataPageClient() {
     setLimit(newLimit);
     const params = new URLSearchParams(searchParams);
     params.set('limit', newLimit.toString());
-    params.set('page', '1'); // Reset to first page when changing limit
+    params.set('page', '1');
     router.push(`/data?${params}`);
   };
 
@@ -152,9 +127,6 @@ export default function DataPageClient() {
     setIsModalOpen(true);
   };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -162,7 +134,7 @@ export default function DataPageClient() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                {product ? `Data for ${product}` : 'All Trade Data'}
+                All Trade Data
               </h1>
               <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-between sm:justify-end">
                 <ThemeToggle />
@@ -190,7 +162,7 @@ export default function DataPageClient() {
                     performSearch();
                   }
                 }}
-                placeholder="Search by HS CODE, Product Name, Item Description, Grade, Grade Category, etc..."
+                placeholder="Search by HS CODE, Item Description, Importer, Consignor, Origin, Port..."
                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base"
               />
               <div className="flex gap-2 sm:gap-4">
@@ -224,30 +196,35 @@ export default function DataPageClient() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Cash Date')}>
-                      <span className="hidden sm:inline">Cash Date</span>
-                      <span className="sm:hidden">Cash Date</span>
-                      {sortField === 'Cash Date' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Grade NO.
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Item Description')}>
-                      <span className="hidden sm:inline">Item Description</span>
-                      <span className="sm:hidden">Description</span>
-                      {sortField === 'Item Description' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" onClick={() => handleSort('Importer Name')}>
+                      Importer {sortField === 'Importer Name' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Grade')}>
-                      Grade {sortField === 'Grade' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" onClick={() => handleSort('Consignor Name')}>
+                      Consignor {sortField === 'Consignor Name' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('Grade Category')}>
-                      <span className="hidden sm:inline">Grade Category</span>
-                      <span className="sm:hidden">Category</span>
-                      {sortField === 'Grade Category' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('CASH DATE')}>
+                      Cash Date {sortField === 'CASH DATE' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      <span className="hidden sm:inline">Actual Importer Name</span>
-                      <span className="sm:hidden">Importer</span>
+                      USA RATE
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Qty
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" onClick={() => handleSort('Item Description')}>
+                      Item Description {sortField === 'Item Description' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       HS CODE
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Origin
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Port
                     </th>
                   </tr>
                 </thead>
@@ -255,26 +232,36 @@ export default function DataPageClient() {
                   {data.map((item) => (
                     <tr key={item._id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => handleRowClick(item)}>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {item['Cash Date']}
+                        {item.normalizedGrade ?? item['normalizedGrade'] ?? item['Grade'] ?? item['grade'] ?? ''}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white" title={item['Item Description']}>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <div className="max-w-32 sm:max-w-none truncate">{item['Importer Name']}</div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <div className="max-w-32 sm:max-w-none truncate">{item['Consignor Name']}</div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {item.cashDate ? new Date(item.cashDate).toLocaleDateString() : (item['CASH DATE'] ?? '')}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {item.usaRateWithCurr ?? (item['USA RATE'] ? `${item['USA RATE']}${item['Curr'] ? ' ' + item['Curr'] : ''}` : '')}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {item['Quantity'] ?? item['Qty'] ?? ''}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 dark:text-white" title={item['Item Description']}>
                         <div className="max-w-32 sm:max-w-none truncate">
-                          {item['Item Description'].length > 50 ? `${item['Item Description'].substring(0, 50)}...` : item['Item Description']}
-                        </div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {item['Grade']}
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {item['Grade Category']}
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        <div className="max-w-32 sm:max-w-none truncate">
-                          {item['Actual Importer Name']}
+                          {item['Item Description']?.length > 50 ? `${item['Item Description'].substring(0, 50)}...` : item['Item Description']}
                         </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {item['HS CODE']}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {item['Origin']}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {item['PORT']}
                       </td>
                     </tr>
                   ))}

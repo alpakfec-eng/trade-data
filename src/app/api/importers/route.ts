@@ -11,9 +11,9 @@ export async function GET() {
     const importers = await TradeData.aggregate([
       {
         $group: {
-          _id: '$Actual Importer Name',
-          importerName: { $first: '$Actual Importer Name' },
-          importerAddress: { $first: '$Importer Address' },
+          _id: '$Importer Name',
+          importerName: { $first: '$Importer Name' },
+          importerAddress: { $first: '$Importer ADDRESS' },
           count: { $sum: 1 }
         }
       },

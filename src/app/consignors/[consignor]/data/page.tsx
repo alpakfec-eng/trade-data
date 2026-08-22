@@ -7,14 +7,20 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 interface TradeDataItem {
   _id: string;
-  'Actual Importer Name': string;
+  'HS CODE': string;
   'Item Description': string;
-  'Grade': string;
-  'Qty (Kg)': string;
-  'Price/Kg': string;
-  'Cash Date': string;
-  'Month': string;
-  'Year': string;
+  'Importer Name': string;
+  'Importer ADDRESS': string;
+  'Origin': string;
+  'Quantity': string;
+  'Unit': string;
+  'USA VAL': string;
+  'DECL VAL': string;
+  'TOTAL PKR VALU ASSESSED': string;
+  'CASH DATE': string;
+  'LC No': string;
+  'BL Number': string;
+  'PORT': string;
 }
 
 export default function ConsignorDataPage() {
@@ -80,59 +86,77 @@ export default function ConsignorDataPage() {
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Importer Name
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      HS CODE
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Item Description
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Grade
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      Importer
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Qty (Kg)
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      Origin
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Price/Kg
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      Quantity
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      USA VAL
+                    </th>
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      DECL VAL
+                    </th>
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      Total PKR
+                    </th>
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Cash Date
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Month/Year
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      Port
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {data.map((item) => (
                     <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        <div className="max-w-48 sm:max-w-none truncate">
-                          {item['Actual Importer Name']}
-                        </div>
+                      <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {item['HS CODE']}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        <div className="max-w-48 sm:max-w-none truncate">
+                      <td className="px-2 sm:px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="max-w-48 truncate" title={item['Item Description']}>
                           {item['Item Description']}
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {item['Grade']}
+                      <td className="px-2 sm:px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="max-w-32 truncate" title={item['Importer Name']}>
+                          {item['Importer Name']}
+                        </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {item['Qty (Kg)']}
+                      <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {item['Origin']}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {item['Price/Kg']}
+                      <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {item['Quantity']} {item['Unit']}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {item['Cash Date']}
+                      <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        ${item['USA VAL']}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {item['Month']}/{item['Year']}
+                      <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        ${item['DECL VAL']}
+                      </td>
+                      <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        Rs. {item['TOTAL PKR VALU ASSESSED']}
+                      </td>
+                      <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {item['CASH DATE']}
+                      </td>
+                      <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {item['PORT']}
                       </td>
                     </tr>
                   ))}

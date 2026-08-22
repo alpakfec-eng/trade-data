@@ -15,20 +15,24 @@ export async function GET(
     const decodedImporter = decodeURIComponent(importer);
 
     const data = await TradeData.find(
-      { 'Actual Importer Name': decodedImporter },
+      { 'Importer Name': decodedImporter },
       {
+        'HS CODE': 1,
         'Item Description': 1,
-        'Grade': 1,
-        'Qty (Kg)': 1,
-        'Price/Kg': 1,
-        'DCL Val': 1,
-        'Assessed Value': 1,
-        'Cash Date': 1,
-        'Month': 1,
-        'Year': 1,
-        'Actual Consignor Name': 1
+        'Consignor Name': 1,
+        'Consignor Address': 1,
+        'Origin': 1,
+        'Quantity': 1,
+        'Unit': 1,
+        'USA VAL': 1,
+        'DECL VAL': 1,
+        'TOTAL PKR VALU ASSESSED': 1,
+        'CASH DATE': 1,
+        'LC No': 1,
+        'BL Number': 1,
+        'PORT': 1
       }
-    ).sort({ 'Year': -1, 'Month': -1 });
+    ).sort({ 'CASH DATE': -1 });
 
     return NextResponse.json({ data });
   } catch (error) {
